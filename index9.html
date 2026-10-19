@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <title>3 Step Checkout</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #eef2ff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .checkout-container {
+            width: 100%;
+            max-width: 750px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        
+
+        .progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .progress::before {
+            content: "";
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: #ddd;
+            z-index: 0;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            background: white;
+        }
+
+        .circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ddd;
+            color: #555;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+            font-weight: bold;
+        }
+
+        .step.active .circle {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .step p {
+            margin-top: 7px;
+            font-size: 14px;
+        }
+
+    
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .error {
+            color: red;
+            font-size: 13px;
+            margin-top: 5px;
+            display: block;
+        }
+
+    
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+        }
+
+        button {
+            border: none;
+            padding: 12px 22px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .next-btn,
+        .submit-btn {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .back-btn {
+            background: #ddd;
+            color: #333;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        
+
+        .checkout-step {
+            display: none;
+        }
+
+        .checkout-step.active {
+            display: block;
+        }
+
+        
+
+        .plans {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .plan {
+            border: 2px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .plan:hover {
+            border-color: #4f46e5;
+        }
+
+        .plan.selected {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .plan h3 {
+            margin-bottom: 10px;
+        }
+
+        .price {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        
+
+        .billing {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .billing button {
+            background: #ddd;
+            margin: 5px;
+        }
+
+        .billing button.active {
+            background: #4f46e5;
+            color: white;
+        }
+
+       
+
+        .summary {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .summary p {
+            margin: 12px 0;
+            font-size: 16px;
+        }
+
+        .total {
+            font-size: 22px !important;
+            font-weight: bold;
+            color: #4f46e5;
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
+        }
+
+        .success {
+            text-align: center;
+            color: green;
+            font-size: 20px;
+            padding: 30px;
+            display: none;
+        }
+
+        
+
+        @media (max-width: 600px) {
+
+            .checkout-container {
+                padding: 20px;
+            }
+
+            .plans {
+                grid-template-columns: 1fr;
+            }
+
+            .progress p {
+                font-size: 11px;
+            }
+
+            .circle {
+                width: 35px;
+                height: 35px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="checkout-container">
+
+    <h1>Checkout</h1>
+
+
+    <div class="progress">
+
+        <div class="step active" id="progress1">
+            <div class="circle">1</div>
+            <p>Personal Info</p>
+        </div>
+
+        <div class="step" id="progress2">
+            <div class="circle">2</div>
+            <p>Select Plan</p>
+        </div>
+
+        <div class="step" id="progress3">
+            <div class="circle">3</div>
+            <p>Summary</p>
+        </div>
+
+    </div>
+
+    //step 1
+
+    <div class="checkout-step active" id="step1">
+
+        <h2>Personal Information</h2>
+
+        <br>
+
+        <div class="form-group">
+
+            <label>Full Name</label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your full name"
+            >
+
+            <span class="error" id="nameError"></span>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Email</label>
+
+            <input
+                type="text"
+                id="email"
+                placeholder="Enter your email"
+            >
+
+            <span class="error" id="emailError"></span>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Phone</label>
+
+            <input
+                type="text"
+                id="phone"
+                placeholder="Enter your phone number"
+            >
+
+            <span class="error" id="phoneError"></span>
+
+        </div>
+
+
+        <div class="buttons">
+
+            <div></div>
+
+            <button
+                class="next-btn"
+                onclick="goToStep2()"
+            >
+                Next
+            </button>
+
+        </div>
+
+    </div>
+
+
+   //step 2
+
+    <div class="checkout-step" id="step2">
+
+        <h2>Select Your Plan</h2>
+
+        <!-- Billing -->
+
+        <div class="billing">
+
+            <button
+                id="monthlyBtn"
+                class="active"
+                onclick="changeBilling('monthly')"
+            >
+                Monthly
+            </button>
+
+            <button
+                id="yearlyBtn"
+                onclick="changeBilling('yearly')"
+            >
+                Yearly
+            </button>
+
+        </div>
+
+
+        //plans
+
+        <div class="plans">
+
+            <div
+                class="plan"
+                id="basic"
+                onclick="selectPlan('Basic')"
+            >
+
+                <h3>Basic</h3>
+
+                <p>For beginners</p>
+
+                <br>
+
+                <div class="price" id="basicPrice">
+                    ₹199/month
+                </div>
+
+            </div>
+
+
+            <div
+                class="plan"
+                id="pro"
+                onclick="selectPlan('Pro')"
+            >
+
+                <h3>Pro</h3>
+
+                <p>For professionals</p>
+
+                <br>
+
+                <div class="price" id="proPrice">
+                    ₹499/month
+                </div>
+
+            </div>
+
+
+            <div
+                class="plan"
+                id="enterprise"
+                onclick="selectPlan('Enterprise')"
+            >
+
+                <h3>Enterprise</h3>
+
+                <p>For businesses</p>
+
+                <br>
+
+                <div class="price" id="enterprisePrice">
+                    ₹999/month
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="buttons">
+
+            <button
+                class="back-btn"
+                onclick="goToStep(1)"
+            >
+                Back
+            </button>
+
+            <button
+                class="next-btn"
+                onclick="goToStep3()"
+            >
+                Next
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- STEP 3 -->
+
+    <div class="checkout-step" id="step3">
+
+        <h2>Order Summary</h2>
+
+        <br>
+
+        <div class="summary">
+
+            <p>
+                <strong>Name:</strong>
+                <span id="summaryName"></span>
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                <span id="summaryEmail"></span>
+            </p>
+
+            <p>
+                <strong>Phone:</strong>
+                <span id="summaryPhone"></span>
+            </p>
+
+            <p>
+                <strong>Plan:</strong>
+                <span id="summaryPlan"></span>
+            </p>
+
+            <p>
+                <strong>Billing:</strong>
+                <span id="summaryBilling"></span>
+            </p>
+
+            <p class="total">
+                Total:
+                <span id="summaryTotal"></span>
+            </p>
+
+        </div>
+
+
+        <div class="buttons">
+
+            <button
+                class="back-btn"
+                onclick="goToStep(2)"
+            >
+                Back
+            </button>
+
+            <button
+                class="submit-btn"
+                onclick="submitOrder()"
+            >
+                Submit Order
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+
+    <div class="success" id="successMessage">
+
+        <h2>🎉 Order Submitted!</h2>
+
+        <p>Thank you for your purchase.</p>
+
+    </div>
+
+</div>
+
+
+<script>
+
+  
+
+    let state = {
+
+        name: "",
+
+        email: "",
+
+        phone: "",
+
+        plan: "",
+
+        billing: "monthly"
+
+    };
+
+
+    
+
+    const prices = {
+
+        Basic: 199,
+
+        Pro: 499,
+
+        Enterprise: 999
+
+    };
+
+
+    
+
+    function goToStep2() {
+
+        let name = document.getElementById("name").value.trim();
+
+        let email = document.getElementById("email").value.trim();
+
+        let phone = document.getElementById("phone").value.trim();
+
+
+        let valid = true;
+
+
+        
+
+        if (name === "") {
+
+            document.getElementById("nameError").innerText =
+                "Please enter your name.";
+
+            valid = false;
+
+        } else {
+
+            document.getElementById("nameError").innerText = "";
+
+        }
+
+
+        
+
+        let emailPattern =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+        if (!emailPattern.test(email)) {
+
+            document.getElementById("emailError").innerText =
+                "Please enter a valid email.";
+
+            valid = false;
+
+        } else {
+
+            document.getElementById("emailError").innerText = "";
+
+        }
+
+
+
+
+        let phonePattern = /^[0-9]{10}$/;
+
+
+        if (!phonePattern.test(phone)) {
+
+            document.getElementById("phoneError").innerText =
+                "Phone must contain 10 digits.";
+
+            valid = false;
+
+        } else {
+
+            document.getElementById("phoneError").innerText = "";
+
+        }
+
+
+        /* If validation is successful */
+
+        if (valid) {
+
+            state.name = name;
+
+            state.email = email;
+
+            state.phone = phone;
+
+            goToStep(2);
+
+        }
+
+    }
+
+
+    /* SELECT PLAN */
+
+    function selectPlan(planName) {
+
+        state.plan = planName;
+
+        document.querySelectorAll(".plan").forEach(function(plan) {
+
+            plan.classList.remove("selected");
+
+        });
+
+        document
+            .getElementById(planName.toLowerCase())
+            .classList.add("selected");
+
+    }
+
+
+    /* CHANGE MONTHLY / YEARLY */
+
+    function changeBilling(type) {
+
+        state.billing = type;
+
+
+        if (type === "monthly") {
+
+            document
+                .getElementById("monthlyBtn")
+                .classList.add("active");
+
+            document
+                .getElementById("yearlyBtn")
+                .classList.remove("active");
+
+
+            document.getElementById("basicPrice").innerText =
+                "₹199/month";
+
+            document.getElementById("proPrice").innerText =
+                "₹499/month";
+
+            document.getElementById("enterprisePrice").innerText =
+                "₹999/month";
+
+        }
+
+
+        else {
+
+            document
+                .getElementById("yearlyBtn")
+                .classList.add("active");
+
+            document
+                .getElementById("monthlyBtn")
+                .classList.remove("active");
+
+
+            document.getElementById("basicPrice").innerText =
+                "₹1990/year";
+
+            document.getElementById("proPrice").innerText =
+                "₹4990/year";
+
+            document.getElementById("enterprisePrice").innerText =
+                "₹9990/year";
+
+        }
+
+    }
+
+    function goToStep3() {
+
+        if (state.plan === "") {
+
+            alert("Please select a plan.");
+
+            return;
+
+        }
+
+
+        generateSummary();
+
+        goToStep(3);
+
+    }
+
+
+    /* GENERATE SUMMARY */
+
+    function generateSummary() {
+
+        document.getElementById("summaryName").innerText =
+            state.name;
+
+        document.getElementById("summaryEmail").innerText =
+            state.email;
+
+        document.getElementById("summaryPhone").innerText =
+            state.phone;
+
+        document.getElementById("summaryPlan").innerText =
+            state.plan;
+
+        document.getElementById("summaryBilling").innerText =
+            state.billing;
+
+
+        let total;
+
+
+        if (state.billing === "monthly") {
+
+            total = prices[state.plan];
+
+        } else {
+
+            /* 10 months price = 2 months free */
+
+            total = prices[state.plan] * 10;
+
+        }
+
+
+        document.getElementById("summaryTotal").innerText =
+            "₹" + total;
+
+    }
+
+
+    /* CHANGE STEP */
+
+    function goToStep(stepNumber) {
+
+        document.querySelectorAll(".checkout-step")
+            .forEach(function(step) {
+
+                step.classList.remove("active");
+
+            });
+
+
+        document
+            .getElementById("step" + stepNumber)
+            .classList.add("active");
+
+
+        /* Update progress indicator */
+
+        document.querySelectorAll(".step")
+            .forEach(function(step) {
+
+                step.classList.remove("active");
+
+            });
+
+
+        for (let i = 1; i <= stepNumber; i++) {
+
+            document
+                .getElementById("progress" + i)
+                .classList.add("active");
+
+        }
+
+
+        //restore values
+
+
+        if (stepNumber === 1) {
+
+            document.getElementById("name").value =
+                state.name;
+
+            document.getElementById("email").value =
+                state.email;
+
+            document.getElementById("phone").value =
+                state.phone;
+
+        }
+
+    }
+
+    function submitOrder() {
+
+        document.querySelectorAll(".checkout-step")
+            .forEach(function(step) {
+
+                step.style.display = "none";
+
+            });
+
+
+        document.querySelector(".progress").style.display =
+            "none";
+
+
+        document.querySelector("h1").innerText =
+            "Checkout Complete";
+
+
+        document.getElementById("successMessage").style.display =
+            "block";
+
+
+        console.log("Final Order:", state);
+
+    }
+
+</script>
+
+</body>
+</html>
